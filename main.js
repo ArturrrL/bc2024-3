@@ -1,6 +1,6 @@
+const fs = require('fs');
 const { Command } = require('commander');
 const program = new Command();
-const fs = require('fs');
 
 
 program
@@ -18,13 +18,62 @@ if (!options.input) {
   process.exit(1);
 }
 
-
 if (!fs.existsSync(options.input)) {
   console.error('Cannot find input file');
   process.exit(1);
 }
 
-
 if (!options.output && !options.display) {
   process.exit(0);
 }
+
+const data = readJsonFile(options.input);
+
+function readJsonFile(path) {
+  try {
+    const data = fs.readFileSync(path, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.error('Cannot find input file');
+    } else {
+      console.error('Помилка:', error.message);
+    }
+    process.exit(1);
+  }
+}
+
+const processedData = processData(data);
+
+function processData(data) {
+  let result = '';
+  data.forEach(entry => {
+    result += `${entry.exchangedate}: ${entry.rate}\n`;
+  });
+  return result;
+}
+
+
+if (options.display) {
+  console.log(processedData);
+}
+
+
+if (options.output) {
+  writeToFile(options.output, processedData);
+}
+
+
+
+
+function writeToFile(path, data) {
+  try {
+    fs.writeFileSync(path, data, 'utf8');
+    console.log(`Результати записано до  ${path}`);
+  } catch (error) {
+    console.error('Помилка:', error.message);
+  }
+}
+
+
+
